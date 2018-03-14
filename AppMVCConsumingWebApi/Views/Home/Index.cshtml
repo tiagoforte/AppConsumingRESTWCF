@@ -1,0 +1,123 @@
+﻿@model List<AppMVCConsumingWebApi.Models.Product>
+@{
+      ViewBag.Title = "Home Page";
+}
+
+<form action="/home/index" method="post">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="form-group">
+        <input type="button" class="form-control btn btn-danger" id="btnGetTokenREST" value="Gerar token REST" />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="form-group">
+        <input type="button" class="form-control btn btn-danger" id="btnGetTokenSOAP" value="Gerar token SOAP" />
+      </div>
+    </div>
+    <div class="col-md-pull-8">
+      Token: <span id="spnToken"></span><br />
+      Token: Expira em 1 minuto
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-3">
+      <div class="form-group">
+        <input type="button" class="form-control btn btn-primary" id="btnGetProductREST" value="Buscar produtos - REST" />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="form-group">
+        <input type="button" class="form-control btn btn-success" id="btnGetProductSOAP" value="Buscar produtos - SOAP" />
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div id="lstProdutcs"></div>
+    </div>
+  </div>
+</form>
+<script>
+
+  $(document).ready(function () {
+
+    //Consumindo App WebAPI (JWT)
+    $('#btnGetTokenREST').on('click', function () {
+
+      var obj = new Object();
+      obj.email = "teste@teste.com.br";
+      obj.password = "12345";
+      $.ajax(
+        {
+          type: 'POST',
+          url: 'http://localhost:4570/v1/authenticate',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(obj),
+          error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+            alert(thrownError);
+          },
+          dataType: 'json',
+          cache: false,
+          async: true,
+          success: function (data) {
+            $('#spnToken').html(data.access_token);
+          }
+        });
+    });
+
+    //REST
+    $('#btnGetProductREST').on('click', function () {
+      $.ajax(
+        {
+          type: 'GET',
+          url: '/Home/GetProductREST',
+          data: { token: $('#spnToken').html() },
+          dataType: 'json',
+          cache: false,
+          async: true,
+          success: function (data) {
+            if (data.IsValid) {
+              $('#lstProdutcs').html(data.PartialView);
+            }
+            else {
+              alert(data.Message);
+            }
+          }
+        });
+    });
+
+    //Consumindo App WCF
+    $('#btnGetTokenSOAP').on('click', function () {
+      $.getJSON("/Home/GetTokenSOAP", function (data) {
+        $('#spnToken').html(data);
+      })
+    });
+
+    $('#btnGetProductSOAP').on('click', function () {
+      $.ajax(
+        {
+          type: 'GET',
+          url: '/Home/GetProductSOAP',
+          data: { token: $('#spnToken').html() },
+          dataType: 'json',
+          cache: false,
+          async: true,
+          success: function (data) {
+            if (data.IsValid) {
+              $('#lstProdutcs').html(data.PartialView);
+            }
+            else {
+              alert(data.Message);
+            }
+          }
+        });
+    });
+
+  });
+
+</script>
